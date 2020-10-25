@@ -4,8 +4,8 @@ import numpy as np
 import pyopencl as cl
 import time
 
-xyz = np.dtype([("x", np.int8), ("y", np.int8), ("z", np.int8)])
-xyzw = np.dtype([("x", np.int8), ("y", np.int8), ("z", np.int8), ("w", np.int8)])
+xyz = np.dtype([("x", np.int16), ("y", np.int16), ("z", np.int16)])
+xyzw = np.dtype([("x", np.int16), ("y", np.int16), ("z", np.int16), ("w", np.int16)])
 
 def correlate(xyz_array, xyzw_array):
     ctx = cl.create_some_context()
@@ -22,9 +22,6 @@ def correlate(xyz_array, xyzw_array):
         kernel void correlate(global xyz* xyz_array, global xyzw* xyzw_array, uint xyzw_size, 
                               global xyzw* output_buffer) {
             uint xyz_position = get_global_id(0);
-            int gtid = get_global_id(0);
-            int ltid = get_local_id(0);
-            __local uint my_local_array[8];
             xyz target = xyz_array[xyz_position];
             int w = 0;
             uint min_distance = 4294967295;
@@ -49,7 +46,7 @@ def correlate(xyz_array, xyzw_array):
     queue = cl.CommandQueue(ctx)
     mf = cl.mem_flags
 
-    local_workgroup_size = min(256, ctx.devices[0].max_work_group_size)
+    local_workgroup_size = max(32, ctx.devices[0].max_work_group_size)
     orig_buffer_length = len(xyz_array)
     padded_buffer_length = np.math.ceil(orig_buffer_length / local_workgroup_size) * local_workgroup_size
     padded_input = np.resize(xyz_array, (padded_buffer_length,))
@@ -59,7 +56,6 @@ def correlate(xyz_array, xyzw_array):
     xyz_array_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=padded_input)
     xyzw_array_buf = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=xyzw_array)
     xyz_result_buf = cl.Buffer(ctx, mf.WRITE_ONLY | mf.COPY_HOST_PTR, hostbuf=result_np)
-
 
     print('beginning correlation')
     prg.correlate(queue, (padded_buffer_length,), (local_workgroup_size,), xyz_array_buf, xyzw_array_buf, xyzw_array_len, xyz_result_buf)

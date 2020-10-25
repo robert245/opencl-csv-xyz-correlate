@@ -17,6 +17,7 @@ def do_correlate(xyz_array, xyzw_array):
     return result
 
 
+# Use Numbra to JIT compile the below function for a considerable performance boost.
 @jit
 def correlate_row(current_row, xyzw_array):
     min_distance = None
@@ -48,8 +49,8 @@ def main():
         exit(-1)
 
     # Get files and output.
-    xyz_arr = np.genfromtxt(sys.argv[1], skip_header=1, dtype=np.int8, delimiter=',')
-    xyzw_arr = np.genfromtxt(sys.argv[2], skip_header=1, dtype=np.int8, delimiter=',')
+    xyz_arr = np.genfromtxt(sys.argv[1], skip_header=1, dtype=np.int16, delimiter=',')
+    xyzw_arr = np.genfromtxt(sys.argv[2], skip_header=1, dtype=np.int16, delimiter=',')
     output = sys.argv[3]
 
     # Record the time, get the result, and write to file.
