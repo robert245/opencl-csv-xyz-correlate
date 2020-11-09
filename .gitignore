@@ -1,4 +1,5 @@
-/output.csv
+/output*.*
+__pycache__
 /result_file.csv
 *.iml
 /.idea
